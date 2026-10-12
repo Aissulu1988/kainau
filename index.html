@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Қайнау — виртуалды зертхана</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#eef6fa;--card:#fff;--ink:#17323f;--mute:#5a7887;--line:#d5e5ee;--acc:#0b7f86;--hot:#e4572e;--ok:#2a9d5c;--grid:#e4eef4;--soft:#e6f3f6}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1c23;--card:#162a33;--ink:#e5f1f6;--mute:#93b0bd;--line:#2a4350;--grid:#233843;--soft:#1d3640}}
+:root[data-theme="dark"]{--bg:#0e1c23;--card:#162a33;--ink:#e5f1f6;--mute:#93b0bd;--line:#2a4350;--grid:#233843;--soft:#1d3640}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Trebuchet MS","Segoe UI",Tahoma,sans-serif;padding:18px 14px 40px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:0 0 10px}
+.q{color:var(--mute);max-width:70ch;margin:0 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:14px;max-width:1100px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.wide{grid-column:1/-1}
+canvas{width:100%;height:auto;display:block;border-radius:10px;background:var(--soft)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;align-items:center}
+button{font:inherit;font-weight:700;border:0;border-radius:10px;padding:9px 14px;background:var(--acc);color:#fff;cursor:pointer;min-height:40px}
+button.hot{background:var(--hot)}button.gray{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+button:disabled{opacity:.4;cursor:not-allowed}
+button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+select,textarea{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+textarea{width:100%;min-height:54px;resize:vertical}
+.read{display:flex;gap:18px;flex-wrap:wrap;font-size:24px;font-weight:800;margin-bottom:8px}
+.read small{display:block;font-size:12px;font-weight:600;color:var(--mute)}
+.chip{display:inline-block;padding:3px 10px;border-radius:99px;border:1px solid var(--line);color:var(--mute);font-size:13px;font-weight:700}
+.chip.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.stat{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--soft);min-height:62px}
+ol.steps{margin:0;padding-left:0;list-style:none}ol.steps li{padding:6px 0 6px 30px;position:relative;border-bottom:1px solid var(--line)}
+ol.steps li:before{content:"";position:absolute;left:4px;top:9px;width:16px;height:16px;border-radius:50%;border:2px solid var(--line)}
+ol.steps li.done:before{background:var(--ok);border-color:var(--ok)}ol.steps li.done{color:var(--mute)}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid var(--line);padding:6px;text-align:left;vertical-align:top}th{background:var(--soft)}
+.hint{color:var(--hot);font-weight:700;min-height:22px;margin-top:6px}
+.note{font-size:13px;color:var(--mute);margin:8px 0 0}
+label{display:block;font-weight:700;margin:10px 0 4px}
+#ans{margin-top:10px;padding:10px 12px;border-left:4px solid var(--ok);background:var(--soft);border-radius:6px}
+#ans p{margin:4px 0}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<h1>Қайнау — виртуалды зертхана</h1>
+<p class="q"><b>Зерттеу сұрағы:</b> сұйықты қыздырғанда қандай өзгерістер болады және қайнау процесінің негізгі белгілері қандай?</p>
+
+<div class="grid">
+<section class="card">
+  <h2>Тәжірибе</h2>
+  <div class="read"><div><small>Температура</small><span id="tv">20.0</span> °C</div><div><small>Уақыт</small><span id="tm">00:00</span></div></div>
+  <canvas id="lab" aria-label="Су құйылған ыдыс, қыздырғыш және термометр"></canvas>
+  <div class="bar">
+    <button id="bStart">Бастау</button>
+    <button id="bPause" class="gray">Кідірту</button>
+    <button id="bReset" class="gray">Қайта бастау</button>
+  </div>
+  <div class="bar">
+    <button id="bOn" class="hot">Қыздырғышты қосу</button>
+    <button id="bOff" class="gray">Қыздырғышты өшіру</button>
+    <label style="margin:0;font-weight:600">Жылдамдық:
+      <select id="spd"><option value="5">×5</option><option value="10" selected>×10</option><option value="20">×20</option></select></label>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Су молекулалары (үлкейтіп қарау)</h2>
+  <canvas id="mol" aria-label="Су молекулаларының қозғалысы"></canvas>
+  <div class="bar"><span class="chip" id="cEv">Булану: сұйықтың бетінде</span><span class="chip" id="cBo">Қайнау: бүкіл көлемде</span></div>
+  <div class="stat" id="stat"></div>
+</section>
+
+<section class="card">
+  <h2>Температура – уақыт графигі</h2>
+  <canvas id="gr" aria-label="Температура мен уақыттың графигі"></canvas>
+  <p class="note">Модельде: қалыпты атмосфералық қысымда (101 кПа) су 100 °C-та қайнайды. Қайнау кезінде берілген жылу сұйықты буға айналдыруға жұмсалады, сондықтан температура өзгермейді.</p>
+</section>
+
+<section class="card">
+  <h2>Зерттеу кезеңдері</h2>
+  <ol class="steps" id="steps">
+    <li>Қыздырғышты қосып, судың қызуын бақыла.</li>
+    <li>Температура мен уақытты кестеге тіркеп, өзгерісті жаз (1- және 2-кезең).</li>
+    <li>Қайнау басталған сәтті бақыла.</li>
+    <li>Көпіршіктерді зертте: қайнау кезінде 3-кезеңді тіркеп, кемінде 15 с бақыла.</li>
+    <li>Қайнау мен буланудың айырмасын анықтап, төмендегі сұрақтарға жауап бер.</li>
+  </ol>
+</section>
+
+<section class="card wide">
+  <h2>Зерттеу кестесі</h2>
+  <table>
+    <tr><th>Кезең</th><th>Уақыт</th><th>Температура</th><th>Бақыланған өзгеріс</th><th></th></tr>
+    <tr><td>1-кезең: қыздыру басы</td><td id="rt0">–</td><td id="rT0">–</td><td><textarea id="o0" placeholder="Не байқадың?"></textarea></td><td><button data-m="0">Өлшеу</button></td></tr>
+    <tr><td>2-кезең: қайнауға дейін</td><td id="rt1">–</td><td id="rT1">–</td><td><textarea id="o1" placeholder="Бетінде не болып жатыр? Молекулалар қалай қозғалады?"></textarea></td><td><button data-m="1">Өлшеу</button></td></tr>
+    <tr><td>3-кезең: қайнау кезінде</td><td id="rt2">–</td><td id="rT2">–</td><td><textarea id="o2" placeholder="Көпіршіктер қайда пайда болады? Температура өзгере ме?"></textarea></td><td><button data-m="2">Өлшеу</button></td></tr>
+  </table>
+  <div class="hint" id="hint" role="status"></div>
+</section>
+
+<section class="card wide">
+  <h2>Қорытынды сұрақтары</h2>
+  <label for="q0">1. Қайнау басталғанда қандай белгілер байқалады?</label><textarea id="q0"></textarea>
+  <label for="q1">2. Қайнау мен буланудың айырмасы неде?</label><textarea id="q1"></textarea>
+  <label for="q2">3. Қайнау кезінде температура қалай өзгереді?</label><textarea id="q2"></textarea>
+  <div class="bar"><button id="bCmp" disabled>Үлгі жауаппен салыстыру</button><span class="note" id="cmpNote">3-кезеңді тіркегеннен кейін ашылады.</span></div>
+  <div id="ans" hidden>
+    <p><b>1.</b> Сұйықтың бүкіл көлемінде бу көпіршіктері түзіледі, өседі, жоғары көтеріліп, бетінде жарылады. Су қарқынды бу шығарады.</p>
+    <p><b>2.</b> Булану – кез келген температурада, тек сұйықтың бетінде, баяу жүреді, көпіршіксіз. Қайнау – белгілі температурада (қалыпты қысымда 100 °C), бүкіл көлемде, көпіршіктермен қарқынды жүреді.</p>
+    <p><b>3.</b> Температура тұрақты (100 °C) қалады, өйткені жылу сұйықты буға айналдыруға жұмсалады, молекулалардың орташа жылдамдығын арттыруға емес.</p>
+  </div>
+</section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const dpr=Math.min(2,window.devicePixelRatio||1);
+function cv(id,w,h){const c=$(id);c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);return x}
+const L=cv('lab',380,400),M=cv('mol',380,250),G=cv('gr',460,260);
+const css=getComputedStyle(document.documentElement),col=n=>css.getPropertyValue(n).trim();
+const R=(a,b)=>a+Math.random()*(b-a);
+const mmss=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');
+let S;
+function init(){
+  S={T:20,t:0,run:false,heat:false,lvl:1,boil:0,everHeat:false,everBoil:false,data:[[0,20]],last:0,rec:[null,null,null],
+     bub:[],steam:[],mb:[],vap:[],mp:[],acc:0,acc2:0,acc3:0,mbT:0};
+  for(let i=0;i<55;i++)S.mp.push({x:R(10,370),y:R(85,240),a:R(0,6.283)});
+}
+init();
+const isBoil=()=>S.heat&&S.T>=99.99;
+
+function step(ds,dt){
+  if(S.heat){
+    if(S.T<100)S.T=Math.min(100,S.T+0.25*ds);
+    else{S.boil+=ds;S.everBoil=true;S.lvl=Math.max(.55,S.lvl-0.0003*ds)}
+  }else S.T=Math.max(20,S.T-0.012*(S.T-20)*ds);
+  S.t+=ds;
+  if(S.t-S.last>=2){S.last=S.t;S.data.push([S.t,S.T])}
+  const b=isBoil(),top=330-200*S.lvl;
+  // көпіршіктер (ыдыс)
+  S.acc+=dt*(b?45:0);while(S.acc>=1){S.acc--;S.bub.push({x:R(102,248),y:326,r:R(2,4),v:R(50,100),k:'b'})}
+  const tiny=S.heat&&S.T>55&&!b?(S.T-55)/45*5:0;
+  S.acc2+=dt*tiny;while(S.acc2>=1){S.acc2--;S.bub.push({x:R(102,248),y:326,r:1.6,v:R(20,35),k:'t',h:R(60,160)})}
+  S.bub=S.bub.filter(p=>{p.y-=p.v*dt;if(p.k=='b'){p.r+=5*dt;if(p.y<=top+p.r){S.steam.push({x:p.x,y:top,r:6,l:1.6,m:1.6});return false}}
+    else if(330-p.y>p.h)return false;return true});
+  // бу
+  const er=Math.pow(Math.max(0,(S.T-30)/70),3)*8+(b?25:0);
+  S.acc3+=dt*er;while(S.acc3>=1){S.acc3--;S.steam.push({x:R(100,250),y:top-2,r:5,l:2,m:2})}
+  S.steam=S.steam.filter(p=>{p.y-=(28+(b?30:0))*dt;p.x+=Math.sin(p.y*.05)*8*dt;p.r+=12*dt;p.l-=dt;return p.l>0});
+  // молекулалар
+  const sp=20+(S.T-20)*1.6;
+  for(const p of S.mp){
+    p.a+=R(-.5,.5)*dt*4;p.x+=Math.cos(p.a)*sp*dt;p.y+=Math.sin(p.a)*sp*dt;
+    if(p.x<6){p.x=6;p.a=Math.PI-p.a}if(p.x>374){p.x=374;p.a=Math.PI-p.a}if(p.y>244){p.y=244;p.a=-p.a}
+    if(p.y<85){p.y=85;
+      const pr=Math.pow(Math.max(0,(S.T-30)/70),3)*.35;
+      if(Math.random()<pr&&S.vap.length<45){S.vap.push({x:p.x,y:p.y,a:-Math.PI/2+R(-.8,.8),l:5});p.x=R(10,370);p.y=R(190,240)}else p.a=-p.a}
+  }
+  S.vap=S.vap.filter(p=>{p.x+=Math.cos(p.a)*100*dt;p.y+=Math.sin(p.a)*100*dt;if(p.x<5||p.x>375)p.a=Math.PI-p.a;if(p.y<5)p.a=-p.a;p.l-=dt;return p.l>0&&p.y<85});
+  S.mbT-=dt;if(b&&S.mbT<=0){S.mb.push({x:R(30,350),y:238,r:5});S.mbT=R(.5,1)}
+  S.mb=S.mb.filter(p=>{p.r+=14*dt;p.y-=32*dt;if(p.y-p.r<85){for(let i=0;i<8;i++)S.vap.push({x:p.x,y:85,a:-Math.PI/2+R(-1,1),l:3});return false}return true});
+}
+
+function drawLab(time){
+  const x=L,b=isBoil(),top=330-200*S.lvl;
+  x.clearRect(0,0,380,400);
+  // қыздырғыш
+  x.fillStyle=S.heat?col('--hot'):'#8ea0aa';x.fillRect(70,338,200,22);
+  if(S.heat){const g=x.createRadialGradient(170,350,5,170,350,120);g.addColorStop(0,'rgba(255,120,40,.5)');g.addColorStop(1,'rgba(255,120,40,0)');x.fillStyle=g;x.fillRect(40,300,260,100)}
+  x.fillStyle=col('--mute');x.font='12px sans-serif';x.textAlign='center';x.fillText('Қыздырғыш: '+(S.heat?'қосулы':'өшірулі'),170,382);
+  // су
+  const r=70+(S.T-20)*.6,g=170-(S.T-20)*.2,bl=235-(S.T-20)*.25;
+  x.fillStyle=`rgb(${r|0},${g|0},${bl|0})`;
+  x.beginPath();x.moveTo(90,330);x.lineTo(90,top);
+  for(let px=90;px<=260;px+=5)x.lineTo(px,top+(b?Math.sin(px*.16+time*9)*2.5:0));
+  x.lineTo(260,330);x.closePath();x.fill();
+  // көпіршіктер
+  for(const p of S.bub){x.beginPath();x.arc(p.x,p.y,p.r,0,6.283);x.fillStyle='rgba(255,255,255,.55)';x.fill();x.strokeStyle='rgba(255,255,255,.9)';x.lineWidth=1;x.stroke()}
+  // ыдыс
+  x.strokeStyle=col('--ink');x.lineWidth=3;x.beginPath();x.moveTo(86,90);x.lineTo(90,330);x.lineTo(260,330);x.lineTo(264,90);x.stroke();
+  // бу
+  for(const p of S.steam){x.beginPath();x.arc(p.x,p.y,p.r,0,6.283);x.fillStyle=`rgba(190,200,210,${.35*p.l/p.m})`;x.fill()}
+  // термометр
+  const ty=T=>320-(T/110)*250;
+  x.fillStyle=col('--card');x.strokeStyle=col('--ink');x.lineWidth=2;x.beginPath();x.roundRect(299,68,14,262,7);x.fill();x.stroke();
+  x.fillStyle=col('--hot');x.beginPath();x.arc(306,332,13,0,6.283);x.fill();x.fillRect(303,ty(S.T),6,332-ty(S.T));
+  x.fillStyle=col('--mute');x.font='11px sans-serif';x.textAlign='left';
+  for(let v=0;v<=100;v+=20){x.fillRect(314,ty(v),6,1.5);x.fillText(v+'°',323,ty(v)+4)}
+}
+
+function drawMol(){
+  const x=M;x.clearRect(0,0,380,250);
+  x.fillStyle='rgba(120,180,230,.28)';x.fillRect(0,80,380,170);
+  x.strokeStyle=col('--acc');x.lineWidth=2;x.beginPath();x.moveTo(0,80);x.lineTo(380,80);x.stroke();
+  x.fillStyle=col('--mute');x.font='12px sans-serif';x.textAlign='left';x.fillText('Бу (газ)',8,16);x.fillText('Су (сұйық)',8,100);
+  x.fillText('Қызыл дөңгелек – бу молекуласы',170,16);
+  for(const p of S.mp){x.beginPath();x.arc(p.x,p.y,5,0,6.283);x.fillStyle='#2f7fd1';x.fill()}
+  for(const p of S.vap){x.beginPath();x.arc(p.x,p.y,5,0,6.283);x.fillStyle=col('--hot');x.fill()}
+  for(const p of S.mb){x.beginPath();x.arc(p.x,p.y,p.r,0,6.283);x.fillStyle='rgba(255,255,255,.6)';x.fill();x.strokeStyle='#fff';x.lineWidth=2;x.stroke();
+    x.fillStyle=col('--hot');for(let i=0;i<6;i++){x.beginPath();x.arc(p.x+R(-.6,.6)*p.r,p.y+R(-.6,.6)*p.r,2.2,0,6.283);x.fill()}}
+}
+
+function drawGr(){
+  const x=G,W=460,H=260,l=46,bt=32,tr=16,tp=14,tmax=Math.max(600,S.t*1.1),X=t=>l+t/tmax*(W-l-tr),Y=T=>H-bt-T/110*(H-bt-tp);
+  x.clearRect(0,0,W,H);x.font='11px sans-serif';x.textAlign='right';
+  for(let v=0;v<=100;v+=20){x.strokeStyle=col('--grid');x.lineWidth=1;x.beginPath();x.moveTo(l,Y(v));x.lineTo(W-tr,Y(v));x.stroke();x.fillStyle=col('--mute');x.fillText(v,l-6,Y(v)+4)}
+  x.setLineDash([5,4]);x.strokeStyle=col('--hot');x.beginPath();x.moveTo(l,Y(100));x.lineTo(W-tr,Y(100));x.stroke();x.setLineDash([]);
+  x.textAlign='center';const st=Math.ceil(tmax/6/60)*60;for(let t=0;t<=tmax;t+=st){x.fillStyle=col('--mute');x.fillText(mmss(t),X(t),H-bt+14)}
+  x.fillText('Уақыт',W/2,H-4);x.save();x.translate(12,H/2);x.rotate(-Math.PI/2);x.fillText('T, °C',0,0);x.restore();
+  x.strokeStyle=col('--acc');x.lineWidth=3;x.beginPath();S.data.forEach((d,i)=>i?x.lineTo(X(d[0]),Y(d[1])):x.moveTo(X(d[0]),Y(d[1])));x.lineTo(X(S.t),Y(S.T));x.stroke();
+  S.rec.forEach((r,i)=>{if(!r)return;x.beginPath();x.arc(X(r.t),Y(r.T),8,0,6.283);x.fillStyle=col('--hot');x.fill();x.fillStyle='#fff';x.font='bold 11px sans-serif';x.fillText(i+1,X(r.t),Y(r.T)+4)});
+}
+
+function ui(){
+  const b=isBoil();
+  $('tv').textContent=S.T.toFixed(1);$('tm').textContent=mmss(S.t);
+  $('bStart').disabled=S.run;$('bPause').disabled=!S.run;$('bOn').disabled=S.heat;$('bOff').disabled=!S.heat;
+  $('cEv').className='chip'+(S.T>35?' on':'');$('cBo').className='chip'+(b?' on':'');
+  $('stat').textContent=b?'Қайнау! Көпіршіктер бүкіл көлемде түзіледі, өседі және жоғары көтеріліп жарылады. Температура 100 °C-та тұрақты.'
+    :S.heat?'Су қызып жатыр: молекулалар жылдамырақ қозғалады. Бетінен ең жылдам молекулалар ұшып шығады — бұл булану.'
+    :S.t>0&&S.T>25?'Қыздырғыш өшірулі, су суып жатыр. Молекулалардың жылдамдығы азаяды, булану баяулайды.'
+    :'Су бөлме температурасында. «Қыздырғышты қосу» батырмасын бас.';
+  $('bCmp').disabled=!S.rec[2];$('cmpNote').hidden=!!S.rec[2];
+  const q=[0,1,2].every(i=>$('q'+i).value.trim().length>3);
+  const done=[S.everHeat,!!(S.rec[0]&&S.rec[1]),S.everBoil,S.boil>=15&&!!S.rec[2],q];
+  document.querySelectorAll('#steps li').forEach((li,i)=>li.classList.toggle('done',done[i]));
+}
+
+let prev=performance.now();
+function frame(n){const dt=Math.min(.05,(n-prev)/1000);prev=n;
+  if(S.run)step(dt*(+$('spd').value),dt);
+  drawLab(n/1000);drawMol();drawGr();ui();requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+let ht;function hint(m){$('hint').textContent=m;clearTimeout(ht);ht=setTimeout(()=>$('hint').textContent='',5000)}
+function meas(i){
+  const b=isBoil();
+  const ok=[S.t>0,S.T>=40&&!b,b][i];
+  if(!ok){hint(['Алдымен тәжірибені бастаңыз.','Температура 40–99 °C аралығында, қайнау басталмай тұрғанда өлшеңіз.','Қайнау әлі басталған жоқ. Температура 100 °C-қа жеткенше күтіңіз.'][i]);return}
+  S.rec[i]={t:S.t,T:S.T};$('rt'+i).textContent=mmss(S.t);$('rT'+i).textContent=S.T.toFixed(1)+' °C';
+}
+document.querySelectorAll('button[data-m]').forEach(b=>b.onclick=()=>meas(+b.dataset.m));
+$('bStart').onclick=()=>S.run=true;
+$('bPause').onclick=()=>S.run=false;
+$('bOn').onclick=()=>{S.heat=true;S.everHeat=true;S.run=true};
+$('bOff').onclick=()=>S.heat=false;
+$('bReset').onclick=()=>{init();['rt','rT'].forEach(p=>[0,1,2].forEach(i=>$(p+i).textContent='–'));[0,1,2].forEach(i=>$('o'+i).value='');$('ans').hidden=true;hint('')};
+$('bCmp').onclick=()=>$('ans').hidden=false;
+</script>
+</body>
+</html>
